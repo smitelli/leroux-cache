@@ -165,6 +165,8 @@ describe('leroux-cache', function () {
     });
 
     describe('Cache Size Control', function () {
+        var sa, sb, sc;
+
         beforeEach(function () {
             c = cache({ sweepDelay : 60 * 1000 });  //avoid sweeping mid-test
         });
@@ -172,8 +174,9 @@ describe('leroux-cache', function () {
         function fillCache () {
             c.set('a', 'This is entry A. It is 37 bytes long.');
             c.set('b', 'temporary');
-            c.set('c', 'This is entry C. It clocks in at a nice round 55 bytes.');
             c.set('b', 'Entry B was once 9 bytes. Now it is 45 bytes.');
+            c.set('c', 'This is entry C. It clocks in at a nice round 55 bytes.');
+            sa = 37; sb = 45; sc = 55;
         }
 
         it('should not allow size to be written', function () {
@@ -190,24 +193,74 @@ describe('leroux-cache', function () {
         it('should accept and use a custom sizeFn', function () {
             c.sizeFn = function (value) { return value.length; };
             fillCache();
-            c.size.should.equal(37 + 55 + 45);
+            c.size.should.equal(sa + sb + sc);
         });
 
         it('should recalculate the cache size when sizeFn changes', function () {
             fillCache();
             c.size.should.equal(3);
             c.sizeFn = function (value) { return value.length * 2; };
-            c.size.should.equal((37 + 55 + 45) * 2);
+            c.size.should.equal((sa + sb + sc) * 2);
         });
 
-        it('should increase the cache size when keys are added');
+        it('should increase the cache size when keys are added', function () {
+            c.sizeFn = function (value) { return value.length; };
+            fillCache();
+            c.size.should.equal(sa + sb + sc);
+            c.set('d', '8 bytes.');
+            c.size.should.equal(sa + sb + sc + 8);
+            c.set('e', 'And 18 more bytes.');
+            c.size.should.equal(sa + sb + sc + 8 + 18);
+        });
 
-        it('should increase the cache size when keys are updated');
+        it('should increase the cache size when keys are updated', function () {
+            c.sizeFn = function (value) { return value.length; };
+            fillCache();
+            c.size.should.equal(sa + sb + sc);
+            c.set('a', '4 b.');
+            c.size.should.equal(4 + sb + sc);
+            c.set('b', '4 b.');
+            c.size.should.equal(4 + 4 + sc);
+            c.set('c', '4 b.');
+            c.size.should.equal(4 + 4 + 4);
+        });
 
-        it('should decrease the cache size when keys are removed');
+        it('should decrease the cache size when keys are removed', function () {
+            c.sizeFn = function (value) { return value.length; };
+            fillCache();
+            c.size.should.equal(sa + sb + sc);
+            c.del('a');
+            c.size.should.equal(sb + sc);
+            c.del('b');
+            c.size.should.equal(sc);
+            c.del('c');
+            c.size.should.equal(0);
+        });
 
-        it('should not delete items if the cache is not over size');
+        it('should not delete items if the cache is not over size', function (done) {
+            c.sizeFn = function (value) { return value.length; };
+            c.maxSize = sa + sb + sc;
+            c.sweepDelay = 5;
+            fillCache();
+            c.size.should.equal(sa + sb + sc);
+            setTimeout(function () {
+                c.size.should.equal(sa + sb + sc);
+                done();
+            }, c.sweepDelay * 2);
+        });
 
-        it('should delete items when the cache is over size');
+        it('should delete items when the cache is over size', function (done) {
+            var biggestEl = Math.max(sa, sb, sc);
+
+            c.sizeFn = function (value) { return value.length; };
+            c.maxSize = biggestEl;
+            c.sweepDelay = 5;
+            fillCache();
+            c.size.should.equal(sa + sb + sc);
+            setTimeout(function () {
+                c.size.should.equal(biggestEl);
+                done();
+            }, c.sweepDelay * 2);
+        });
     });
 });
