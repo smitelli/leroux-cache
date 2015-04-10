@@ -165,7 +165,7 @@ describe('leroux-cache', function () {
     });
 
     describe('Cache Size Control', function () {
-        var sa, sb, sc;
+        var sa, sb, sc, sum;
 
         beforeEach(function () {
             c = cache({ sweepDelay : 60 * 1000 });  //avoid sweeping mid-test
@@ -177,6 +177,11 @@ describe('leroux-cache', function () {
             c.set('b', 'Entry B was once 9 bytes. Now it is 45 bytes.');
             c.set('c', 'This is entry C. It clocks in at a nice round 55 bytes.');
             sa = 37; sb = 45; sc = 55;
+            sum = 0;
+        }
+
+        function byteCounter (value) {
+            return value.length;
         }
 
         it('should not allow size to be written', function () {
@@ -191,7 +196,7 @@ describe('leroux-cache', function () {
         });
 
         it('should accept and use a custom sizeFn', function () {
-            c.sizeFn = function (value) { return value.length; };
+            c.sizeFn = byteCounter;
             fillCache();
             c.size.should.equal(sa + sb + sc);
         });
@@ -199,12 +204,12 @@ describe('leroux-cache', function () {
         it('should recalculate the cache size when sizeFn changes', function () {
             fillCache();
             c.size.should.equal(3);
-            c.sizeFn = function (value) { return value.length * 2; };
-            c.size.should.equal((sa + sb + sc) * 2);
+            c.sizeFn = byteCounter;
+            c.size.should.equal(sa + sb + sc);
         });
 
         it('should increase the cache size when keys are added', function () {
-            c.sizeFn = function (value) { return value.length; };
+            c.sizeFn = byteCounter;
             fillCache();
             c.size.should.equal(sa + sb + sc);
             c.set('d', '8 bytes.');
@@ -214,7 +219,7 @@ describe('leroux-cache', function () {
         });
 
         it('should increase the cache size when keys are updated', function () {
-            c.sizeFn = function (value) { return value.length; };
+            c.sizeFn = byteCounter;
             fillCache();
             c.size.should.equal(sa + sb + sc);
             c.set('a', '4 b.');
@@ -226,7 +231,7 @@ describe('leroux-cache', function () {
         });
 
         it('should decrease the cache size when keys are removed', function () {
-            c.sizeFn = function (value) { return value.length; };
+            c.sizeFn = byteCounter;
             fillCache();
             c.size.should.equal(sa + sb + sc);
             c.del('a');
@@ -238,27 +243,29 @@ describe('leroux-cache', function () {
         });
 
         it('should not delete items if the cache is not over size', function (done) {
-            c.sizeFn = function (value) { return value.length; };
-            c.maxSize = sa + sb + sc;
+            c.maxSize = 3;
             c.sweepDelay = 5;
             fillCache();
-            c.size.should.equal(sa + sb + sc);
+            c.size.should.equal(3);
             setTimeout(function () {
-                c.size.should.equal(sa + sb + sc);
+                c.forEach(function () { sum++; });
+                sum.should.equal(3);
+                c.size.should.equal(3);
+
                 done();
             }, c.sweepDelay * 2);
         });
 
         it('should delete items when the cache is over size', function (done) {
-            var biggestEl = Math.max(sa, sb, sc);
-
-            c.sizeFn = function (value) { return value.length; };
-            c.maxSize = biggestEl;
+            c.maxSize = 1;
             c.sweepDelay = 5;
             fillCache();
-            c.size.should.equal(sa + sb + sc);
+            c.size.should.equal(3);
             setTimeout(function () {
-                c.size.should.equal(biggestEl);
+                c.forEach(function () { sum++; });
+                sum.should.equal(1);
+                c.size.should.equal(1);
+
                 done();
             }, c.sweepDelay * 2);
         });
