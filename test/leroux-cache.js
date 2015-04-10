@@ -165,7 +165,7 @@ describe('leroux-cache', function () {
     });
 
     describe('Cache Size Control', function () {
-        var sa, sb, sc, sum;
+        var sa, sb, sc;
 
         beforeEach(function () {
             c = cache({ sweepDelay : 60 * 1000 });  //avoid sweeping mid-test
@@ -177,7 +177,6 @@ describe('leroux-cache', function () {
             c.set('b', 'Entry B was once 9 bytes. Now it is 45 bytes.');
             c.set('c', 'This is entry C. It clocks in at a nice round 55 bytes.');
             sa = 37; sb = 45; sc = 55;
-            sum = 0;
         }
 
         function byteCounter (value) {
@@ -242,32 +241,37 @@ describe('leroux-cache', function () {
             c.size.should.equal(0);
         });
 
-        it('should not delete items if the cache is not over size', function (done) {
-            c.maxSize = 3;
-            c.sweepDelay = 5;
-            fillCache();
-            c.size.should.equal(3);
-            setTimeout(function () {
+        it('should not delete items until the cache is over size', function (done) {
+            var limit = Math.max(sa, sb, sc),
+                delay = 5;
+
+            function keyCount () {
+                var sum = 0;
                 c.forEach(function () { sum++; });
-                sum.should.equal(3);
-                c.size.should.equal(3);
+                return sum;
+            }
 
-                done();
-            }, c.sweepDelay * 2);
-        });
-
-        it('should delete items when the cache is over size', function (done) {
-            c.maxSize = 1;
-            c.sweepDelay = 5;
+            c.sizeFn = byteCounter;
+            c.sweepDelay = delay;
+            c.maxSize = sa + sb + sc;
             fillCache();
-            c.size.should.equal(3);
-            setTimeout(function () {
-                c.forEach(function () { sum++; });
-                sum.should.equal(1);
-                c.size.should.equal(1);
 
-                done();
-            }, c.sweepDelay * 2);
+            keyCount().should.equal(3);
+            c.size.should.equal(sa + sb + sc);
+
+            setTimeout(function () {
+                keyCount().should.equal(3);
+                c.size.should.equal(sa + sb + sc);
+
+                c.maxSize = limit;
+
+                setTimeout(function () {
+                    keyCount().should.equal(1);
+                    c.size.should.be.lessThan(limit + 1);  //HACK: we mean `<=`
+
+                    done();
+                }, delay * 2);
+            }, delay * 2);
         });
     });
 });
