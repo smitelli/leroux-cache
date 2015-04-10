@@ -4,11 +4,13 @@
     "version": "0.1.0",
     "author": "Scott Smitelli <scott@smitelli.com>",
     "scripts": {
+        "coverage": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha",
         "test": "./node_modules/.bin/mocha"
     },
     "main": "lib/leroux-cache.js",
     "repository": "git://github.com/smitelli/leroux-cache",
     "devDependencies": {
+        "istanbul": "0.3.13",
         "mocha": "2.2.4",
         "should": "5.2.0"
     }
