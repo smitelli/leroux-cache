@@ -213,23 +213,25 @@ describe('leroux-cache', function () {
             c.sweepDelay = delay / 2;
 
             for (i = 0; i <=3; i++) {
-                // Tick 0: Set a.
+                // Tick 0: Set a, b, and c.
                 // Tick 1: Idle.
-                // Tick 2: Set b.
-                // Tick 3: Verify a has expired, and b still exists.
+                // Tick 2: Touch b, read c, and set d.
+                // Tick 3: Verify a has expired, and b/c/d still exist.
                 (function (ii) {
                     setTimeout(function () {
                         if (ii === 0) {
                             c.set('a', 'AAA');
                             c.set('b', 'BBB');
+                            c.set('c', 'CCC');
                         } else if (ii === 2) {
                             c.set('b', 'BBB updated');
-                            c.set('c', 'CCC');
-                            c.size.should.equal(3);
+                            c.get('c');
+                            c.set('d', 'DDD');
+                            c.size.should.equal(4);
 
                             c.maxAge = delay * 2;
                         } else if (ii === 3) {
-                            c.size.should.equal(2);
+                            c.size.should.equal(3);
 
                             done();
                         }
