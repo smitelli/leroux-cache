@@ -1,7 +1,6 @@
 'use strict';
 
-var cache  = require('../'),
-    should = should;
+var cache  = require('../');
 
 describe('leroux-cache', function () {
     var c;
