@@ -183,6 +183,12 @@ describe('leroux-cache', function () {
             return value.length;
         }
 
+        function keyCounter () {
+            var sum = 0;
+            c.forEach(function () { sum++; });
+            return sum;
+        }
+
         it('should not allow size to be written', function () {
             (function () {
                 c.size = 1;
@@ -241,37 +247,78 @@ describe('leroux-cache', function () {
             c.size.should.equal(0);
         });
 
-        it('should not delete items until the cache is over size', function (done) {
+        it('should not drop items until the cache is over size', function (done) {
             var limit = Math.max(sa, sb, sc),
-                delay = 5;
-
-            function keyCount () {
-                var sum = 0;
-                c.forEach(function () { sum++; });
-                return sum;
-            }
+                delay = 5,
+                i;
 
             c.sizeFn = byteCounter;
-            c.sweepDelay = delay;
+            c.sweepDelay = delay * 1.5;
             c.maxSize = sa + sb + sc;
             fillCache();
 
-            keyCount().should.equal(3);
+            keyCounter().should.equal(3);
             c.size.should.equal(sa + sb + sc);
 
-            setTimeout(function () {
-                keyCount().should.equal(3);
-                c.size.should.equal(sa + sb + sc);
+            for (i = 0; i <= 2; i++){
+                // Tick 0: Verify cache size, filled with all items. Decrease
+                //         maxSize so we're now violating it.
+                // Tick 1: Idle.
+                // Tick 2: Verify that the cache reduced size on its own.
+                (function (ii) {
+                    setTimeout(function () {
+                        if (ii === 0) {
+                            keyCounter().should.equal(3);
+                            c.size.should.equal(sa + sb + sc);
 
-                c.maxSize = limit;
+                            c.maxSize = limit;
+                        } else if (ii === 2) {
+                            keyCounter().should.equal(1);
+                            c.size.should.be.lessThan(limit + 1);  //HACK: We mean `<=`
 
-                setTimeout(function () {
-                    keyCount().should.equal(1);
-                    c.size.should.be.lessThan(limit + 1);  //HACK: we mean `<=`
+                            done();
+                        }
+                    }, ii * delay);
+                })(i);
+            }
+        });
 
-                    done();
-                }, delay * 2);
-            }, delay * 2);
+        it('can drop the whole cache if critically over size', function (done) {
+            var delay = 5,
+                i;
+
+            c.sizeFn = byteCounter;
+            c.sweepDelay = delay * 1.5;
+            c.maxSize = null;
+
+            for (i = 0; i <= 7; i++) {
+                // Tick 0: Add key0.
+                // Tick 1: Add key1.
+                // Tick 2: Add key2.
+                // Tick 3: Add key3.
+                // Tick 4: Add key4.
+                // Tick 5: Verify cache size, filled with all items. Decrease
+                //         maxSize so we're now violating it.
+                // Tick 6: Idle.
+                // Tick 7: Verify that the cache reduced size on its own.
+                (function (ii) {
+                    setTimeout(function () {
+                        if (ii < 5) {
+                            c.set('key' + ii, 'This value is 28 bytes long.');
+                        } else if (ii === 5) {
+                            keyCounter().should.equal(5);
+                            c.size.should.equal(28 * 5);
+
+                            c.maxSize = 20;
+                        } else if (ii === 7) {
+                            keyCounter().should.equal(0);
+                            c.size.should.equal(0);
+
+                            done();
+                        }
+                    }, ii * delay);
+                })(i);
+            }
         });
     });
 });
