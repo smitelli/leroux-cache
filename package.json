@@ -4,7 +4,7 @@
     "version": "0.1.0",
     "author": "Scott Smitelli <scott@smitelli.com>",
     "scripts": {
-        "ci": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha --report lcovonly -- -R spec && sleep 10 && cat ./coverage/lcov.info | ./node_modules/.bin/coveralls",
+        "ci": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/.bin/coveralls",
         "coverage": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha",
         "test": "./node_modules/.bin/mocha"
     },
