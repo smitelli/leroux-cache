@@ -23,4 +23,16 @@ cache.get('two');
 // undefined
 ```
 
+## TODO
+
 This documentation is woefully incomplete.
+
+## Acknowledgements
+
+This module was heavily inspired by [node-lru-cache](https://github.com/isaacs/node-lru-cache).
+While it doesn't maintain strict compatibility with the original API anymore, it
+should still be pretty close.
+
+## License
+
+MIT
