@@ -3,15 +3,12 @@
     "version": "0.1.0",
     "description": "A cache object that *actually* deletes the least-recently-used items.",
     "author": "Scott Smitelli <scott@smitelli.com>",
-    "license": {
-        "type": "MIT",
-        "url": "https://raw.githubusercontent.com/smitelli/leroux-cache/master/LICENSE"
-    }
     "repository": {
         "type": "git",
         "url": "https://github.com/smitelli/leroux-cache.git"
     },
     "bugs": "https://github.com/smitelli/leroux-cache/issues",
+    "license": "MIT",
     "main": "lib/leroux-cache.js",
     "scripts": {
         "ci": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/.bin/coveralls",
