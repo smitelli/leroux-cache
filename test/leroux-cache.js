@@ -1,9 +1,16 @@
 'use strict';
 
-var cache = require('../');
+var cache  = require('../'),
+    should = should;
 
 describe('leroux-cache', function () {
     var c;
+
+    function keyCounter () {
+        var sum = 0;
+        c.forEach(function () { sum++; });
+        return sum;
+    }
 
     describe('Initialization, Setters and Defaults', function () {
         it('should return an instance even if not invoked with new', function () {
@@ -155,17 +162,86 @@ describe('leroux-cache', function () {
             }).should.not.throw();
         });
 
-        it('can reset()');
+        it('can reset()', function () {
+            c.size.should.equal(2);
+            c.reset();
+            c.size.should.equal(0);
+        });
     });
 
     describe('Cache Age Control', function () {
-        it('should not return a stale key, even if sweep has not happened');
+        var delay = 5;  //ms
 
-        it('should sweep stale keys automatically');
+        beforeEach(function () {
+            c = cache({
+                maxAge     : 60 * 1000,  //avoid expiring/sweeping mid-test
+                sweepDelay : 60 * 1000
+            });
+        });
+
+        it('should not return a stale key, even if sweep has not happened', function (done) {
+            var i;
+
+            c.maxAge = delay * 2;
+
+            for (i = 0; i <=3; i++) {
+                // Tick 0: Set a.
+                // Tick 1: Idle.
+                // Tick 2: Set b.
+                // Tick 3: Verify a has expired, and b still exists.
+                (function (ii) {
+                    setTimeout(function () {
+                        if (ii === 0) {
+                            c.set('a', 'AAA');
+                        } else if (ii === 2) {
+                            c.set('b', 'BBB');
+                        } else if (ii === 3) {
+                            (c.get('a') === undefined).should.be.true;
+                            keyCounter().should.equal(1);
+                            c.get('b').should.equal('BBB');
+
+                            done();
+                        }
+                    }, ii * delay);
+                })(i);
+            }
+        });
+
+        it('should sweep stale keys automatically', function (done) {
+            var i;
+
+            c.sweepDelay = delay / 2;
+
+            for (i = 0; i <=3; i++) {
+                // Tick 0: Set a.
+                // Tick 1: Idle.
+                // Tick 2: Set b.
+                // Tick 3: Verify a has expired, and b still exists.
+                (function (ii) {
+                    setTimeout(function () {
+                        if (ii === 0) {
+                            c.set('a', 'AAA');
+                            c.set('b', 'BBB');
+                        } else if (ii === 2) {
+                            c.set('b', 'BBB updated');
+                            c.set('c', 'CCC');
+                            c.size.should.equal(3);
+
+                            c.maxAge = delay * 2;
+                        } else if (ii === 3) {
+                            c.size.should.equal(2);
+
+                            done();
+                        }
+                    }, ii * delay);
+                })(i);
+            }
+        });
     });
 
     describe('Cache Size Control', function () {
-        var sa, sb, sc;
+        var delay = 5,  //ms
+            sa, sb, sc;
 
         beforeEach(function () {
             c = cache({ sweepDelay : 60 * 1000 });  //avoid sweeping mid-test
@@ -181,12 +257,6 @@ describe('leroux-cache', function () {
 
         function byteCounter (value) {
             return value.length;
-        }
-
-        function keyCounter () {
-            var sum = 0;
-            c.forEach(function () { sum++; });
-            return sum;
         }
 
         it('should not allow size to be written', function () {
@@ -249,7 +319,6 @@ describe('leroux-cache', function () {
 
         it('should not drop items until the cache is over size', function (done) {
             var limit = Math.max(sa, sb, sc),
-                delay = 5,
                 i;
 
             c.sizeFn = byteCounter;
@@ -284,8 +353,7 @@ describe('leroux-cache', function () {
         });
 
         it('can drop the whole cache if critically over size', function (done) {
-            var delay = 5,
-                i;
+            var i;
 
             c.sizeFn = byteCounter;
             c.sweepDelay = delay * 1.5;
