@@ -16,14 +16,13 @@ describe('leroux-cache', function () {
             cache().should.be.instanceof(cache);
         });
 
-        it('should interpret a numeric options as maxSize', function () {
+        it('should interpret a numeric option as maxSize', function () {
             c = cache(111);
             c.maxSize.should.equal(111);
         });
 
         it('should have a default sizeFn', function () {
             c = cache();
-	    console.log(c.sizeFn);
             c.sizeFn.should.be.a.Function;
         });
 
