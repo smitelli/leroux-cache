@@ -2,4 +2,7 @@ language: node_js
 node_js:
   - "0.12"
   - "0.10"
+  - "stable"
+  - "4.x"
+  - "6.x"
 script: npm run-script ci

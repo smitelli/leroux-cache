@@ -23,7 +23,8 @@ describe('leroux-cache', function () {
 
         it('should have a default sizeFn', function () {
             c = cache();
-            c.sizeFn.should.be.a.function;
+	    console.log(c.sizeFn);
+            c.sizeFn.should.be.a.Function;
         });
 
         it('should have a default maxSize', function () {
