@@ -169,7 +169,7 @@ describe('leroux-cache', function () {
     });
 
     describe('Cache Age Control', function () {
-        var delay = 5;  //ms
+        var delay = 50;  //ms
 
         beforeEach(function () {
             c = cache({
@@ -241,7 +241,7 @@ describe('leroux-cache', function () {
     });
 
     describe('Cache Size Control', function () {
-        var delay = 5,  //ms
+        var delay = 50,  //ms
             sa, sb, sc;
 
         beforeEach(function () {
