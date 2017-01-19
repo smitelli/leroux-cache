@@ -1,6 +1,6 @@
 {
     "name": "leroux-cache",
-    "version": "0.1.1",
+    "version": "0.2.0",
     "description": "A cache object that *actually* deletes the least-recently-used items.",
     "author": "Scott Smitelli <scott@smitelli.com>",
     "repository": {
